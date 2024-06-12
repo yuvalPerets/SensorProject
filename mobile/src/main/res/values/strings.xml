@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">test3</string>
+    <string name="record">Record</string>
+    <string name="enter_tag_here">Enter tag here</string>
+    <string name="received_data_n">Received Data:\n</string>
+    <string name="show_stored_data">Show Stored Data</string>
+    <string name="stored_values">Stored Values</string>
+    <string name="clear_stored_data">clear stored data</string>
+
+</resources>
