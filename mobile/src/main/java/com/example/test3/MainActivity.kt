@@ -8,7 +8,7 @@ package com.example.test3
 
 
 import android.Manifest
-import android.app.Activity
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -158,8 +158,49 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         customGraphView = findViewById(R.id.customGraphView)
         textViewData = findViewById(R.id.textViewData)
 
-        editTextTag = findViewById(R.id.editTextTag)
-        buttonRecord = findViewById(R.id.buttonRecord)
+        buttonWalking = findViewById(R.id.buttonWalking)
+        buttonSitting = findViewById(R.id.buttonSitting)
+        buttonWriting = findViewById(R.id.buttonWriting)
+        buttonWaving = findViewById(R.id.buttonWaving)
+
+        //editTextTag = findViewById(R.id.editTextTag)
+        //buttonRecord = findViewById(R.id.buttonRecord)
+
+        val textViewEditButtons = findViewById<TextView>(R.id.textViewEditButtons)
+        textViewEditButtons.setOnClickListener {
+            // Create a dialog for editing buttons
+            val dialog = Dialog(this)
+            dialog.setContentView(R.layout.activity_edit_buttons)
+
+            // Access the EditText fields
+            val editTextButton1 = dialog.findViewById<EditText>(R.id.editTextButton1)
+            val editTextButton2 = dialog.findViewById<EditText>(R.id.editTextButton2)
+            val editTextButton3 = dialog.findViewById<EditText>(R.id.editTextButton3)
+            val editTextButton4 = dialog.findViewById<EditText>(R.id.editTextButton4)
+
+            // Pre-fill with current button values
+            editTextButton1.setText(buttonWalking.text)
+            editTextButton2.setText(buttonSitting.text)
+            editTextButton3.setText(buttonWriting.text)
+            editTextButton4.setText(buttonWaving.text)
+
+            // Set listeners for Save and Cancel buttons
+            dialog.findViewById<Button>(R.id.buttonCancel).setOnClickListener {
+                dialog.dismiss() // Close the dialog
+            }
+
+            dialog.findViewById<Button>(R.id.buttonSave).setOnClickListener {
+                // Save new button values
+                buttonWalking.text = editTextButton1.text.toString()
+                buttonSitting.text = editTextButton2.text.toString()
+                buttonWriting.text = editTextButton3.text.toString()
+                buttonWaving.text = editTextButton4.text.toString()
+
+                dialog.dismiss() // Close the dialog after saving
+            }
+
+            dialog.show() // Show the dialog
+        }
         sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
         textViewStoredData = findViewById(R.id.textViewStoredData)
 
@@ -172,10 +213,10 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         loadModel()
 
          //Button to open file explorer
-      val button = findViewById<Button>(R.id.buttonSelectModel)
-        button.setOnClickListener {
-            checkStoragePermission()
-        }
+//      val button = findViewById<Button>(R.id.buttonSelectModel)
+//        button.setOnClickListener {
+//            checkStoragePermission()
+//        }
 
         val buttonClearStoredData: Button = findViewById(R.id.buttonClearStoredData)
         buttonClearStoredData.setOnClickListener {
@@ -189,17 +230,17 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), REQUEST_CODE_PICK_FILE)
         }
 
-        buttonRecord.setOnClickListener {
-            isRecording = !isRecording
-            if (isRecording) {
-                buttonRecord.text = getString(R.string.stop_recording)
-                windowStartTime = System.currentTimeMillis() // Initialize the start time for the sliding window
-                slidingWindowData.clear() // Clear any previous data
-            } else {
-                buttonRecord.text = getString(R.string.record_button)
-
-            }
-        }
+//        buttonRecord.setOnClickListener {
+//            isRecording = !isRecording
+//            if (isRecording) {
+//                buttonRecord.text = getString(R.string.stop_recording)
+//                windowStartTime = System.currentTimeMillis() // Initialize the start time for the sliding window
+//                slidingWindowData.clear() // Clear any previous data
+//            } else {
+//                buttonRecord.text = getString(R.string.record_button)
+//
+//            }
+//        }
         // button for showing stored data
         buttonShowRecord = findViewById(R.id.buttonShowStoredData)
         buttonShowRecord.setOnClickListener {
@@ -208,6 +249,24 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         // Set data callback
         DataListenerService.setDataCallback(this)
 
+    }
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 1001 && resultCode == RESULT_OK) {
+            // Get the updated button texts
+            val button1Text = data?.getStringExtra("button1Text")
+            val button2Text = data?.getStringExtra("button2Text")
+            val button3Text = data?.getStringExtra("button3Text")
+            val button4Text = data?.getStringExtra("button4Text")
+
+            // Update buttons with new text
+            buttonWalking.text = button1Text
+            buttonSitting.text = button2Text
+            buttonWriting.text = button3Text
+            buttonWaving.text = button4Text
+        }
     }
 
     // Function to load the TensorFlow Lite model
@@ -289,15 +348,15 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         startActivityForResult(intent, REQUEST_CODE_SELECT_FILE)
     }
     // Step 3: Handle file selection
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE_SELECT_FILE && resultCode == Activity.RESULT_OK) {
-            data?.data?.let { uri ->
-                // Process the selected .tflite file
-                overrideModelFile(uri)
-            }
-        }
-    }
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//        if (requestCode == REQUEST_CODE_SELECT_FILE && resultCode == Activity.RESULT_OK) {
+//            data?.data?.let { uri ->
+//                // Process the selected .tflite file
+//                overrideModelFile(uri)
+//            }
+//        }
+//    }
 
     // Step 4: Override the model file in the app's 'ml' directory
 
@@ -452,7 +511,8 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         }
     }
     private fun processSlidingWindow(context: Context) {
-        val tag = editTextTag.text.toString()
+        //val tag = editTextTag.text.toString()
+        val tag = "testing"
 
         // Find the amount of values we have in the window
 

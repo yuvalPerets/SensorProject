@@ -28,48 +28,110 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- New Button for selecting .tflite model -->
-    <Button
-        android:id="@+id/buttonSelectModel"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:padding="8dp"
-        android:text="@string/select_model"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/accelerometerView" tools:ignore="VisualLintButtonSize" />
+<!--    &lt;!&ndash; New Button for selecting .tflite model &ndash;&gt;-->
+<!--    <Button-->
+<!--        android:id="@+id/buttonSelectModel"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:padding="8dp"-->
+<!--        android:text="@string/select_model"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/accelerometerView" tools:ignore="VisualLintButtonSize" />-->
 
     <!-- EditText for entering tags -->
-    <EditText
-        android:id="@+id/editTextTag"
-        android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="16dp"
-        android:autofillHints="waving"
-        android:hint="@string/enter_tag_here"
-        android:inputType="text"
-        android:padding="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonSelectModel"
-        tools:ignore="VisualLintTextFieldSize" />
+<!--    <EditText-->
+<!--        android:id="@+id/editTextTag"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="60dp"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:autofillHints="waving"-->
+<!--        android:hint="@string/enter_tag_here"-->
+<!--        android:inputType="text"-->
+<!--        android:padding="8dp"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintHorizontal_bias="0.5"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/buttonSelectModel"-->
+<!--        tools:ignore="VisualLintTextFieldSize" />-->
 
-    <!-- Button for starting/stopping recording -->
-    <Button
-        android:id="@+id/buttonRecord"
-        android:layout_width="0dp"
+<!--    &lt;!&ndash; Button for starting/stopping recording &ndash;&gt;-->
+<!--    <Button-->
+<!--        android:id="@+id/buttonRecord"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="8dp"-->
+<!--        android:padding="8dp"-->
+<!--        android:text="@string/record"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintHorizontal_bias="0.5"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/editTextTag"-->
+<!--        tools:ignore="VisualLintButtonSize" />-->
+
+
+    <!-- TextView for displaying "edit buttons" label -->
+
+    <!-- GridLayout for activity buttons -->
+    <TextView
+        android:id="@+id/textViewEditButtons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/edit_button_tags"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.949"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/accelerometerView" />
+
+    <GridLayout
+        android:id="@+id/gridLayoutActions"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:columnCount="2"
+        android:rowCount="2"
         android:padding="8dp"
-        android:text="@string/record"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/editTextTag"
-        tools:ignore="VisualLintButtonSize" />
+        app:layout_constraintTop_toBottomOf="@id/textViewEditButtons">
 
+        <!-- Button 1: Walking -->
+        <Button
+            android:id="@+id/buttonWalking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="@string/button_1_tag" />
+
+        <!-- Button 2: Sitting -->
+        <Button
+            android:id="@+id/buttonSitting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="@string/button_2_tag" />
+
+        <!-- Button 3: Writing -->
+        <Button
+            android:id="@+id/buttonWriting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="@string/button_3_tag" />
+
+        <!-- Button 4: Waving -->
+        <Button
+            android:id="@+id/buttonWaving"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="@string/button_4_tag" />
+
+    </GridLayout>
     <!-- Button to show stored data -->
     <Button
         android:id="@+id/buttonShowStoredData"
@@ -81,7 +143,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonRecord"
+        app:layout_constraintTop_toBottomOf="@id/gridLayoutActions"
         tools:ignore="VisualLintButtonSize" />
 
     <Button

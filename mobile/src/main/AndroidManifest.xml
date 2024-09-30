@@ -5,8 +5,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-
-
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -17,6 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Test3"
         tools:targetApi="31">
+        <activity
+            android:name=".EditButtonsActivity"
+            android:exported="false" />
 
         <service
             android:name=".DataListenerService"
@@ -24,7 +25,11 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
-                <data android:scheme="wear" android:host="*" android:pathPrefix="/Sensor_data_path" />
+
+                <data
+                    android:host="*"
+                    android:pathPrefix="/Sensor_data_path"
+                    android:scheme="wear" />
             </intent-filter>
         </service>
 
@@ -37,7 +42,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
     </application>
 
 </manifest>

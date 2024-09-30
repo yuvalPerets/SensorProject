@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "981881117260",
+    "project_id": "snsorprojectdataset",
+    "storage_bucket": "snsorprojectdataset.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:981881117260:android:f2956b41ae59153b15f2e9",
+        "android_client_info": {
+          "package_name": "com.example.test3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlRTqxR1ZAFMUVFoBEihdBGmVr3wX0Dg0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

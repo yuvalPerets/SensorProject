@@ -11,10 +11,10 @@
     <string name="select_model">select new model</string>
     <string name="edit_activities">Edit Activities</string>
     <string name="edit_button_tags">Edit Button Tags</string>
-    <string name="button_1_tag">Button 1 Tag</string>
-    <string name="button_2_tag">Button 2 Tag</string>
-    <string name="button_3_tag">Button 3 Tag</string>
-    <string name="button_4_tag">Button 4 Tag</string>
+    <string name="button_1_tag">Walking</string>
+    <string name="button_2_tag">Writing</string>
+    <string name="button_3_tag">Sitting</string>
+    <string name="button_4_tag">Waving</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
 
