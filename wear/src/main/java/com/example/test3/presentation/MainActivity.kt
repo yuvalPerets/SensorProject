@@ -6,7 +6,7 @@
 
 package com.example.test3.presentation
 
-// imports for grpah show
+// imports for graph show
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -36,10 +36,21 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 import com.example.test3.presentation.theme.Test3Theme
 
+import android.content.Intent
+import com.example.test3.presentation.SensorService
+
+
+
 // imports for sending data
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.*
 import android.util.Log
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material.Button
+
 object Constants {
     const val DATA_PATH = "/Sensor_data_path"
 }
@@ -59,7 +70,7 @@ private fun sendDataToMobile(context: Context, data: String) {
     }
 }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity()   {
 
     //connecting to sensors
     private lateinit var sensorManager: SensorManager
@@ -78,21 +89,40 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setTheme(android.R.style.Theme_DeviceDefault)
-
+        // Set up the UI
+        setContent {
+            WearApp(
+                onStartService = { startSensorService() },
+                onStopService = { stopSensorService() }
+            )
+        }
+        /*
         // Initialize sensor manager and accelerometer
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-
+        //accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER )
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER )
         // Register sensor listener
         accelerometer?.let {
-            sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_NORMAL)
-
+            //sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_UI)
             setContent {
                 WearApp("Android", xAccelerationState.value , yAccelerationState.value, zAccelerationState.value )
             }
+            */
+
+    }
+    private fun startSensorService() {
+        val serviceIntent = Intent(this, SensorService::class.java)
+        startForegroundService(serviceIntent)
+    }
+
+    private fun stopSensorService() {
+        val serviceIntent = Intent(this, SensorService::class.java)
+        stopService(serviceIntent)
     }
 }
     // Define sensor listener
+/*
     private val sensorListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             // Handle accelerometer data changes here
@@ -117,8 +147,11 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         // Unregister sensor listener
         sensorManager.unregisterListener(sensorListener)
+        stopService(Intent(this, SensorService::class.java))
     }
 }
+
+ */
 
 @Composable
 fun SensorGraph(xAcceleration: Float, yAcceleration: Float, zAcceleration: Float) {
@@ -151,7 +184,7 @@ fun SensorGraph(xAcceleration: Float, yAcceleration: Float, zAcceleration: Float
 }
 
 @Composable
-fun WearApp(greetingName: String, xAcceleration: Float, yAcceleration: Float, zAcceleration: Float) {
+fun WearApp(onStartService: () -> Unit, onStopService: () -> Unit) {
     Test3Theme {
         Box(
             modifier = Modifier
@@ -160,19 +193,28 @@ fun WearApp(greetingName: String, xAcceleration: Float, yAcceleration: Float, zA
             contentAlignment = Alignment.Center
         ) {
             TimeText()
-            Greeting(greetingName = greetingName, xAcceleration = xAcceleration, yAcceleration = yAcceleration, zAcceleration = zAcceleration)
-            SensorGraph(xAcceleration = xAcceleration, yAcceleration = yAcceleration, zAcceleration = zAcceleration)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Button(onClick = onStartService) {
+                    Text("Start Service")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = onStopService) {
+                    Text("Stop Service")
+                }
+            }
         }
     }
 }
 
 @Composable
-fun Greeting(greetingName: String, xAcceleration: Float,yAcceleration: Float,zAcceleration: Float) {
+//fun Greeting(greetingName: String, xAcceleration: Float,yAcceleration: Float,zAcceleration: Float) {
+    fun Greeting(greetingName: String){
     Text(
         modifier = Modifier.fillMaxWidth(),
         textAlign = TextAlign.Center,
         color = MaterialTheme.colors.primary,
-        text = buildAnnotatedString {
+        text = "Welcome to $greetingName!"
+        /*text = buildAnnotatedString {
             //append(stringResource(R.string.hello_world, greetingName))
             append("sensor data : ")
             append("\n")
@@ -181,7 +223,8 @@ fun Greeting(greetingName: String, xAcceleration: Float,yAcceleration: Float,zAc
             append("y-axis Acceleration: $yAcceleration")
             append("\n")
             append("z-axis Acceleration: $zAcceleration")
-        }
+            */
+
     )
 }
 
@@ -190,5 +233,8 @@ fun Greeting(greetingName: String, xAcceleration: Float,yAcceleration: Float,zAc
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    WearApp("Preview Android", 0f , 0f , 0f)
+    WearApp(
+        onStartService = {},
+        onStopService = {}
+    )
 }

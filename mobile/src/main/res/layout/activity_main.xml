@@ -1,11 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+
+    <!-- CustomGraphView for displaying graph -->
+    <com.example.test3.CustomGraphView
+        android:id="@+id/customGraphView"
+        android:layout_width="290dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/accelerometerView" />
 
     <!-- Custom Accelerometer View - circle changing colors -->
     <com.example.test3.AccelerometerView
@@ -15,6 +27,18 @@
         android:layout_marginTop="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- New Button for selecting .tflite model -->
+    <Button
+        android:id="@+id/buttonSelectModel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:padding="8dp"
+        android:text="@string/select_model"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/accelerometerView" tools:ignore="VisualLintButtonSize" />
 
     <!-- EditText for entering tags -->
     <EditText
@@ -29,7 +53,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/accelerometerView" />
+        app:layout_constraintTop_toBottomOf="@id/buttonSelectModel"
+        tools:ignore="VisualLintTextFieldSize" />
 
     <!-- Button for starting/stopping recording -->
     <Button
@@ -42,7 +67,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/editTextTag" />
+        app:layout_constraintTop_toBottomOf="@id/editTextTag"
+        tools:ignore="VisualLintButtonSize" />
 
     <!-- Button to show stored data -->
     <Button
@@ -55,7 +81,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonRecord" />
+        app:layout_constraintTop_toBottomOf="@id/buttonRecord"
+        tools:ignore="VisualLintButtonSize" />
 
     <Button
         android:id="@+id/buttonClearStoredData"
@@ -67,7 +94,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonShowStoredData" />
+        app:layout_constraintTop_toBottomOf="@id/buttonShowStoredData"
+        tools:ignore="VisualLintButtonSize" />
 
     <!-- TextView for displaying stored data title -->
     <TextView
@@ -80,16 +108,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/buttonClearStoredData" />
-    <!-- TextView for displaying stored data -->
 
-
-    <!-- Your TextView for displaying received data -->
-
-
+    <!-- ScrollView and TextView for displaying stored data -->
     <ScrollView
         android:id="@+id/scrollView2"
-        android:layout_width="0dp"
-        android:layout_height="150dp"
+        android:layout_width="386dp"
+        android:layout_height="98dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -97,16 +121,15 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textViewStoredDataTitle"
-        app:layout_constraintVertical_bias="0.0">
-
+        app:layout_constraintVertical_bias="0.0"
+        tools:ignore="NestedScrolling">
 
         <TextView
             android:id="@+id/textViewStoredData"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text=""
-            />
+            android:text="" />
     </ScrollView>
 
     <ScrollView
@@ -118,7 +141,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/scrollView2">
+        app:layout_constraintTop_toBottomOf="@id/scrollView2"
+        tools:ignore="NestedScrolling">
 
         <TextView
             android:id="@+id/textViewData"
@@ -127,7 +151,6 @@
             android:padding="16dp"
             android:text="@string/received_data_n"
             android:textSize="16sp" />
-
     </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
