@@ -104,6 +104,7 @@
             android:id="@+id/buttonWalking"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/light_blue"
             android:layout_margin="8dp"
             android:text="@string/button_1_tag" />
 
@@ -112,6 +113,7 @@
             android:id="@+id/buttonSitting"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/light_blue"
             android:layout_margin="8dp"
             android:text="@string/button_2_tag" />
 
@@ -119,7 +121,7 @@
         <Button
             android:id="@+id/buttonWriting"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:backgroundTint="@color/light_blue"
             android:layout_margin="8dp"
             android:text="@string/button_3_tag" />
 
@@ -128,6 +130,7 @@
             android:id="@+id/buttonWaving"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/light_blue"
             android:layout_margin="8dp"
             android:text="@string/button_4_tag" />
 

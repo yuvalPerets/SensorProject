@@ -9,6 +9,7 @@ import android.view.View
 
 class AccelerometerView : View {
     private var textValue: String = ""
+    private var cleanPercent: String = ""
 
     private val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -31,8 +32,9 @@ class AccelerometerView : View {
         defStyleAttr
     )
 
-    fun setTextValue(text: String) {
-        textValue = text
+    fun setTextValue(tag: String, predictionChance: String) {
+        cleanPercent = getIntegerPart(predictionChance)
+        textValue = "$tag : $cleanPercent %"
         invalidate() // Redraw the view to reflect the new string
     }
 
@@ -46,6 +48,17 @@ class AccelerometerView : View {
         canvas.drawCircle(width / 2f, height / 2f, radius, circlePaint)
 
         // Draw the string inside the circle
-        canvas.drawText(textValue, width / 2f, height / 2f, textPaint)
+        val textLines = textValue.split("\n")
+        for (i in textLines.indices) {
+            canvas.drawText(
+                textLines[i],
+                width / 2f,
+                height / 2f + (i * textPaint.textSize), // Adjust vertical position
+                textPaint
+            )
+        }
+    }
+    fun getIntegerPart(value: String): String {
+        return value.split(".")[0] // Split the string at the decimal point and take the first part
     }
 }

@@ -25,7 +25,7 @@ class CustomGraphView @JvmOverloads constructor(
 
         val width = width
         val height = height
-        val padding = 50
+        val padding = 100
         val graphHeight = height - 2 * padding
         val graphWidth = width - 2 * padding
 
@@ -47,9 +47,15 @@ class CustomGraphView @JvmOverloads constructor(
         paint.color = color
         paint.strokeWidth = 3f
 
+        // Calculate min and max values from all sensor data
+        val minY = listOf(sensor1Data.minOrNull() ?: 0f, sensor2Data.minOrNull() ?: 0f, sensor3Data.minOrNull() ?: 0f).minOrNull() ?: 0f
         val maxY = listOf(sensor1Data.maxOrNull() ?: 0f, sensor2Data.maxOrNull() ?: 0f, sensor3Data.maxOrNull() ?: 0f).maxOrNull() ?: 0f
+
+        // Determine the range and center the zero
+        val range = maxOf(-minY, maxY) // Make sure to cover both positive and negative
         val scaleX = graphWidth.toFloat() / (data.size - 1)
-        val scaleY = graphHeight.toFloat() / maxY
+        val scaleY = graphHeight.toFloat() / (2 * range) // Adjust for both positive and negative values
+
 
         for (i in 0 until data.size - 1) {
             val startX = padding + i * scaleX

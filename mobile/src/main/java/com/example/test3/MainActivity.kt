@@ -13,10 +13,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.MotionEvent
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -86,7 +88,7 @@ object Constants {
 
 
 class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
-    private lateinit var textViewData: TextView
+    //private lateinit var textViewData: TextView
     private lateinit var textViewStoredData: TextView
     private lateinit var editTextTag: EditText
     private lateinit var buttonRecord: Button
@@ -94,6 +96,7 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
     private lateinit var buttonLoadModel: Button
 
     private var isRecording = false
+    private var currentTag =""
     private lateinit var sharedPreferences: SharedPreferences
 
 
@@ -156,7 +159,7 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
             }
         }
         customGraphView = findViewById(R.id.customGraphView)
-        textViewData = findViewById(R.id.textViewData)
+       // textViewData = findViewById(R.id.textViewData)
 
         buttonWalking = findViewById(R.id.buttonWalking)
         buttonSitting = findViewById(R.id.buttonSitting)
@@ -165,6 +168,78 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
 
         //editTextTag = findViewById(R.id.editTextTag)
         //buttonRecord = findViewById(R.id.buttonRecord)
+
+        buttonWalking.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    isRecording = true
+                    currentTag = buttonWalking.text.toString()
+                    buttonWalking.setBackgroundColor(Color.RED)
+                    // Handle button press
+                }
+                MotionEvent.ACTION_UP -> {
+                    isRecording = false
+                    buttonWalking.setBackgroundColor(Color.rgb(173,216,230))
+                    currentTag=""
+                    // Handle button release
+                }
+            }
+            true
+        }
+        buttonSitting.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                     isRecording = true
+                    currentTag = buttonSitting.text.toString()
+                    buttonSitting.setBackgroundColor(Color.RED)
+                    // Handle button press
+                }
+                MotionEvent.ACTION_UP -> {
+                    isRecording = false
+                    buttonSitting.setBackgroundColor(Color.rgb(173,216,230))
+                    currentTag=""
+                    // Handle button release
+                }
+            }
+            true
+        }
+        buttonWriting.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                     isRecording = true
+                    currentTag = buttonWriting.text.toString()
+                    buttonWriting.setBackgroundColor(Color.RED)
+                    // Handle button press
+                }
+                MotionEvent.ACTION_UP -> {
+                    isRecording = false
+                    buttonWriting.setBackgroundColor(Color.rgb(173,216,230))
+                    currentTag=""
+                    // Handle button release
+                }
+            }
+            true
+        }
+        buttonWaving.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                     isRecording = true
+                    currentTag = buttonWaving.text.toString()
+                    buttonWaving.setBackgroundColor(Color.RED)
+                    // Handle button press
+                }
+                MotionEvent.ACTION_UP -> {
+                    isRecording = false
+                    buttonWaving.setBackgroundColor(Color.rgb(173,216,230))
+                    currentTag=""
+                    // Handle button release
+                }
+            }
+            true
+        }
+
+
+
 
         val textViewEditButtons = findViewById<TextView>(R.id.textViewEditButtons)
         textViewEditButtons.setOnClickListener {
@@ -183,6 +258,8 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
             editTextButton2.setText(buttonSitting.text)
             editTextButton3.setText(buttonWriting.text)
             editTextButton4.setText(buttonWaving.text)
+
+
 
             // Set listeners for Save and Cancel buttons
             dialog.findViewById<Button>(R.id.buttonCancel).setOnClickListener {
@@ -221,6 +298,7 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         val buttonClearStoredData: Button = findViewById(R.id.buttonClearStoredData)
         buttonClearStoredData.setOnClickListener {
             clearStoredData()
+            analyzeDataSet()
         }
 
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
@@ -428,7 +506,7 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
                 Date(timestamp)
             )
             // Append the received data and timestamp to the existing text
-            textViewData.append("[$formattedTime] $data\n") // You can format the data as needed
+            //textViewData.append("[$formattedTime] $data\n") // You can format the data as needed
             // Split the data into smaller segments (simulating real-time updates)
             val values = try {
                 data.split(",").mapNotNull { it.toFloatOrNull() }
@@ -513,12 +591,14 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
     private fun processSlidingWindow(context: Context) {
         //val tag = editTextTag.text.toString()
         val tag = "testing"
+        Log.d("testing-press-fetuare", "current tag is : ${currentTag}")
 
         // Find the amount of values we have in the window
 
 
         val readingAmount = slidingWindowData.size
         Log.d("FeatureComputation-packet-size", "working on current packet - amount of reading is : $readingAmount")
+
         val elapsedSeconds = (System.currentTimeMillis()- startProccesTime) / 1000
 
         if (elapsedSeconds.toInt() % 10 == 0) {
@@ -630,8 +710,8 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
             //)
 
 
-            if (isRecording) {
-                startRecording(windowStartTime, tag, readingAmount, jsonString) }
+            if (isRecording && currentTag != "") {
+                startRecording(windowStartTime, currentTag, readingAmount, jsonString) }
             val key = "record_$windowStartTime"
             sharedPreferences.edit().putString(key,jsonString ).apply()
 
@@ -661,10 +741,11 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
 
                 // Log the most likely prediction and the corresponding tag
                 Log.d("FeatureComputation-test-online", "Most likely prediction index: $highestIndex")
+                Log.d("FeatureComputation-test-online", "@@: $topPredictions")
                 Log.d("FeatureComputation-test-online", "Predicted tag: $predictedTag")
 
                 // Update the AccelerometerView with the predicted tag
-                accelerometerView.setTextValue(predictedTag.toString())
+                accelerometerView.setTextValue(predictedTag.toString() , topPredictions[0].second.toString())
             }
 
 
