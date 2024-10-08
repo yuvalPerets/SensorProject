@@ -17,5 +17,11 @@
     <string name="button_4_tag">Waving</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
+    <string name="progress_50">Progress: 50</string>
+    <string name="amount_to_detect_30">Amount to detect : 30</string>
+    <string name="stress_list">Stress List</string>
+    <string name="clear_stress_count">clear stress count</string>
+    <string name="train_model_online">train model online</string>
+    <string name="export_data">Export data</string>
 
 </resources>

@@ -17,15 +17,19 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.MotionEvent
 import android.widget.Button
 import android.widget.EditText
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -60,9 +64,7 @@ import org.jetbrains.kotlinx.dl.dataset.OnHeapDataset
 import org.json.JSONArray
 import org.json.JSONObject
 import org.jtransforms.fft.DoubleFFT_1D
-import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -89,15 +91,19 @@ object Constants {
 
 class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
     //private lateinit var textViewData: TextView
-    private lateinit var textViewStoredData: TextView
+    //private lateinit var textViewStoredData: TextView
+    private lateinit var textClearCount: TextView
     private lateinit var editTextTag: EditText
     private lateinit var buttonRecord: Button
     private lateinit var buttonShowRecord: Button
     private lateinit var buttonLoadModel: Button
+    private lateinit var buttonExportData: Button
 
     private var isRecording = false
     private var currentTag =""
     private lateinit var sharedPreferences: SharedPreferences
+
+    private lateinit var uniqueTags: List<String>
 
 
     private lateinit var customGraphView: CustomGraphView
@@ -119,6 +125,7 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
     private lateinit var textViewEditOptions: TextView
     private var currentRecordingButton: Button? = null
 
+    private var currentAmount : Int = 30 // default value of 30
 
 
     // List to store reading within the sliding window
@@ -128,6 +135,9 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
     private lateinit var accelerometerView: AccelerometerView
 
     private lateinit var getContent: ActivityResultLauncher<String>
+
+    private val selectedStressTags = mutableListOf<String>()
+    private var stressCount  = 0
 
 
     private val client = OkHttpClient()
@@ -165,6 +175,55 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         buttonSitting = findViewById(R.id.buttonSitting)
         buttonWriting = findViewById(R.id.buttonWriting)
         buttonWaving = findViewById(R.id.buttonWaving)
+
+        textClearCount = findViewById(R.id.ButtonRestCount)
+
+
+        textClearCount.setOnClickListener {
+            stressCount = 0
+        }
+
+        buttonExportData = findViewById(R.id.buttonExportData)
+
+        buttonExportData.setOnClickListener {
+            activateSendToDownloads()
+        }
+
+        // Get references to SeekBar and TextView
+        val seekBar: SeekBar = findViewById(R.id.seekBar)
+        val textView: TextView = findViewById(R.id.textView)
+
+        // Set up listener for SeekBar changes
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                // Update TextView with the current progress value
+                textView.text = "amount to detect : $progress"
+
+                currentAmount = progress
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                // Handle the user starting to drag the SeekBar
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                // Handle the user stopping dragging the SeekBar
+            }
+        })
+
+        val buttonStressList = findViewById<Button>(R.id.buttonStressList)
+        buttonStressList.setOnClickListener {
+            showStressListDialog()
+        }
+
+        trainModel()
+        // Call this function at the start of your activity to initiate the reset
+        resetCounterEveryMinute()
+
+        // Start monitoring stress levels
+        monitorStressLevel()
+
+
 
         //editTextTag = findViewById(R.id.editTextTag)
         //buttonRecord = findViewById(R.id.buttonRecord)
@@ -279,9 +338,12 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
             dialog.show() // Show the dialog
         }
         sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
-        textViewStoredData = findViewById(R.id.textViewStoredData)
+        //textViewStoredData = findViewById(R.id.textViewStoredData)
 
         accelerometerView = findViewById(R.id.accelerometerView)
+
+
+
         // Initialize Firebase Database
 
         database = FirebaseDatabase.getInstance().reference
@@ -295,11 +357,11 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
 //            checkStoragePermission()
 //        }
 
-        val buttonClearStoredData: Button = findViewById(R.id.buttonClearStoredData)
-        buttonClearStoredData.setOnClickListener {
-            clearStoredData()
-            analyzeDataSet()
-        }
+//        val buttonClearStoredData: Button = findViewById(R.id.buttonClearStoredData)
+//        buttonClearStoredData.setOnClickListener {
+//            clearStoredData()
+//            analyzeDataSet()
+//        }
 
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             Log.e("AppCrash", "Unhandled exception in thread ${thread.name}", throwable)
@@ -328,7 +390,94 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         DataListenerService.setDataCallback(this)
 
     }
-    @Deprecated("Deprecated in Java")
+    private fun monitorStressLevel() {
+        val handler = Handler(Looper.getMainLooper())
+        val runnable = object : Runnable {
+            override fun run() {
+                // Check the stress count and update the background color accordingly
+                if (stressCount >= currentAmount) {
+                    accelerometerView.setBackgroundColor("#FF0000") // Red color
+                    Log.d("StressLevel", "Stress count is at or above the current amount. Color set to Red.")
+                } else if (stressCount > currentAmount / 2) {
+                    accelerometerView.setBackgroundColor("#FFFF00") // Yellow color
+                    Log.d("StressLevel", "Stress count is above half the current amount. Color set to Yellow.")
+                } else {
+                    accelerometerView.setBackgroundColor("#00FF00") // Green color
+                    Log.d("StressLevel", "Stress count is below half. Color set to Green.")
+                }
+
+                // Schedule the check again after 1 second
+                handler.postDelayed(this, 1000) // 1000ms = 1 second
+            }
+        }
+        // Start monitoring immediately
+        handler.post(runnable)
+    }
+    // This function will adjust the stress count based on the current color
+
+    fun updateStressCountBasedOnColor() {
+        val currentColor = accelerometerView.getBackgroundColor()
+        when (currentColor) {
+
+            Color.GREEN -> {
+                // If the color is green, reset stress count to 0
+                stressCount = 0
+            }
+            Color.YELLOW -> {
+                // If the color is yellow, set stress count to half of the current amount
+                stressCount = currentAmount / 2
+            }
+            Color.RED -> {
+                // If the color is red, maintain the current stress count
+                // No changes needed, but you can log it if needed
+                Log.d("StressTagCount", "Red color: maintaining current stress count: $stressCount")
+            }
+            else -> {
+                // Default case (if there's an unexpected color)
+                Log.d("StressTagCount", "Unexpected color, no changes made to stress count.")
+            }
+        }
+    }
+    private fun showStressListDialog() {
+        val dialog = AlertDialog.Builder(this)
+        dialog.setTitle("Select Stress Inducing Tags")
+
+        // Convert the list of unique tags to an array of strings
+        val tagsArray = uniqueTags.toTypedArray()  // List of tag names (Strings)
+        val checkedItems = BooleanArray(tagsArray.size)  // Array to track selected items
+
+        // Initialize checkedItems based on selectedStressTags
+        tagsArray.forEachIndexed { index, tagName ->
+            checkedItems[index] = selectedStressTags.contains(tagName)
+        }
+
+        // Set up the multi-choice checkboxes using the tag names
+        dialog.setMultiChoiceItems(tagsArray, checkedItems) { _, index, isChecked ->
+            val tagName = tagsArray[index]
+            if (isChecked) {
+                selectedStressTags.add(tagName)  // Add tag name to selected list
+            } else {
+                selectedStressTags.remove(tagName)  // Remove tag name if unchecked
+            }
+        }
+
+        // Add a "Save" button to confirm the selection
+        dialog.setPositiveButton("Save") { _, _ ->
+            saveStressTags()
+        }
+
+        // Show the dialog
+        dialog.create().show()
+    }
+
+    private fun saveStressTags() {
+        // Here, the selectedStressTags list contains the names of tags marked as stress-inducing
+        Toast.makeText(this, "Stress tags saved: $selectedStressTags", Toast.LENGTH_LONG).show()
+
+        // You can save the selected stress tags or process them further here
+    }
+
+        @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -474,7 +623,7 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         // Clear all stored data from SharedPreferences
         sharedPreferences.edit().clear().apply()
         // Clear the textViewStoredData
-        textViewStoredData.text = ""
+        //textViewStoredData.text = ""
     }
     private fun showStoredData() {
         val storedData = getAllStoredData()
@@ -482,7 +631,7 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         //analyzeDataSet()
 
         trainModel()
-        textViewStoredData.text = storedData
+        //textViewStoredData.text = storedData
     }
     private fun getAllStoredData(): String {
         val allEntries = sharedPreferences.all
@@ -744,59 +893,89 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
                 Log.d("FeatureComputation-test-online", "@@: $topPredictions")
                 Log.d("FeatureComputation-test-online", "Predicted tag: $predictedTag")
 
+                // Handle stress tag count
+                handleTagCount(predictedTag)
+
                 // Update the AccelerometerView with the predicted tag
                 accelerometerView.setTextValue(predictedTag.toString() , topPredictions[0].second.toString())
             }
 
 
 
-            // Load the TensorFlow Lite model
-            CoroutineScope(Dispatchers.Main).launch {
-                val model = loadModel(context)
-
-
-
-                // Prepare input tensor buffer
-                val inputFeature0 =
-                    TensorBuffer.createFixedSize(intArrayOf(1, 30), DataType.FLOAT32)
-                inputFeature0.loadArray(featureVector)
-
-
-
-                Log.d("FeatureComputation-test", "Expected input size for model: ${inputFeature0.shape.joinToString(", ")}")
-
-                val numTags = numberToTag.size
-                // Run model inference
-                val outputFeature0 =
-                    TensorBuffer.createFixedSize(intArrayOf(1, numTags), DataType.FLOAT32)
-                model.run(inputFeature0.buffer, outputFeature0.buffer.rewind())
-
-
-                // Process the model output
-                val result = outputFeature0.floatArray
-                Log.d("FeatureComputation-test", "Inference result: ${result.joinToString(", ")}")
-
-                // Find the index of the maximum value
-                val maxIndex = result.indices.maxByOrNull { result[it] } ?: -1
-
-
-                // Map the index to the tag
-                val predictedTag = numberToTag[maxIndex]
-
-                // Log the most likely prediction and the corresponding tag
-                Log.d("FeatureComputation-test", "Most likely prediction index: $maxIndex")
-                Log.d("FeatureComputation-test", "Predicted tag: $predictedTag")
-
-                // Update the AccelerometerView with the predicted tag
-                //accelerometerView.setTextValue(predictedTag.toString())
-
-                // Release model resources if no longer used
-                model.close()
-            }
+//            // Load the TensorFlow Lite model
+//            CoroutineScope(Dispatchers.Main).launch {
+//                val model = loadModel(context)
+//
+//
+//
+//                // Prepare input tensor buffer
+//                val inputFeature0 =
+//                    TensorBuffer.createFixedSize(intArrayOf(1, 30), DataType.FLOAT32)
+//                inputFeature0.loadArray(featureVector)
+//
+//
+//
+//                Log.d("FeatureComputation-test", "Expected input size for model: ${inputFeature0.shape.joinToString(", ")}")
+//
+//                val numTags = numberToTag.size
+//                // Run model inference
+//                val outputFeature0 =
+//                    TensorBuffer.createFixedSize(intArrayOf(1, numTags), DataType.FLOAT32)
+//                model.run(inputFeature0.buffer, outputFeature0.buffer.rewind())
+//
+//
+//                // Process the model output
+//                val result = outputFeature0.floatArray
+//                Log.d("FeatureComputation-test", "Inference result: ${result.joinToString(", ")}")
+//
+//                // Find the index of the maximum value
+//                val maxIndex = result.indices.maxByOrNull { result[it] } ?: -1
+//
+//
+//                // Map the index to the tag
+//                val predictedTag = numberToTag[maxIndex]
+//
+//                // Log the most likely prediction and the corresponding tag
+//                Log.d("FeatureComputation-test", "Most likely prediction index: $maxIndex")
+//                Log.d("FeatureComputation-test", "Predicted tag: $predictedTag")
+//
+//                // Update the AccelerometerView with the predicted tag
+//                //accelerometerView.setTextValue(predictedTag.toString())
+//
+//                // Release model resources if no longer used
+//                model.close()
+//            }
 
 
 
         }
+    }
+    // Function to handle counting stress tags
+    private fun handleTagCount(predictedTag: String?) {
+        predictedTag?.let { tag ->
+            // Check if the tag is stress-inducing
+            if (selectedStressTags.contains(tag)) {
+                // Increment the counter if the tag is stress-inducing
+                stressCount++
+                Log.d("StressTagCount", "Stress-inducing tag detected: $tag. Current count: $stressCount")
+            }
+        }
+    }
+
+    // Function to reset the counter every minute
+    private fun resetCounterEveryMinute() {
+        val handler = Handler(Looper.getMainLooper())
+        val runnable = object : Runnable {
+            override fun run() {
+                // Reset the counter
+                updateStressCountBasedOnColor()
+                Log.d("StressTagCount", "Counter reset according to color")
+                // Schedule the reset every 60 seconds
+                handler.postDelayed(this, 60000)
+            }
+        }
+        // Start the first reset after 60 seconds
+        handler.postDelayed(runnable, 60000)
     }
     // Function to send the feature vector to the Flask server
     private fun sendFeaturesToServer(featureVector: FloatArray, callback: (List<Pair<Int, Double>>) -> Unit) {
@@ -1071,7 +1250,97 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
                     }
                 }
 
-                val uniqueTags = output.distinct()
+                uniqueTags = output.distinct()
+                tagToNumber.clear()
+                numberToTag.clear()
+                uniqueTags.forEachIndexed { index, tag ->
+                    tagToNumber[tag] = index
+                    numberToTag[index] = tag
+                }
+                val encodedOutput = output.map { tagToNumber[it] ?: -1 }
+
+                Log.d("FirebaseData", "Data Point: $input")
+                Log.d("FirebaseData", "Tag: $output")
+                Log.d("FirebaseData", "Output array size: ${output.size}")
+
+                Log.d("FirebaseData", "Tag to Number Mapping: $tagToNumber")
+                Log.d("FirebaseData", "Number to Tag Mapping: $numberToTag")
+                Log.d("FirebaseData", "Encoded Output: $encodedOutput")
+
+                // Export data after fetching from Firebase
+
+                //exportDataToDownloads(context, input, encodedOutput)
+                exportDataAndSendRequest(context, input, encodedOutput)
+
+
+                task.complete(Pair(input, encodedOutput))
+
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                task.completeExceptionally(Exception("Error fetching data: ${error.message}"))
+            }
+        })
+
+        task.await()
+    }
+    private suspend fun activateSendingToDownloads(context: Context): Pair<List<List<Double>>, List<Int>> = withContext(Dispatchers.IO) {
+        val database: DatabaseReference = FirebaseDatabase.getInstance().getReference("sensorData")
+        val input = mutableListOf<List<Double>>()
+        val output = mutableListOf<String>()
+
+
+        val task = CompletableDeferred<Pair<List<List<Double>>, List<Int>>>()
+
+        database.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                input.clear()
+                output.clear()
+
+                for (dataSnapshot in snapshot.children) {
+                    val data = dataSnapshot.child("data").getValue(String::class.java)
+                    val tag = dataSnapshot.child("tag").getValue(String::class.java)
+
+                    if (data != null && tag != null) {
+                        val jsonObject = JSONObject(data)
+                        val dataPoint = listOf(
+                            jsonObject.getDouble("maxX"),
+                            jsonObject.getDouble("maxY"),
+                            jsonObject.getDouble("maxZ"),
+                            jsonObject.getDouble("meanX"),
+                            jsonObject.getDouble("meanY"),
+                            jsonObject.getDouble("meanZ"),
+                            jsonObject.getDouble("stdX"),
+                            jsonObject.getDouble("stdY"),
+                            jsonObject.getDouble("stdZ"),
+                            jsonObject.getDouble("minX"),
+                            jsonObject.getDouble("minY"),
+                            jsonObject.getDouble("minZ"),
+                            jsonObject.getDouble("rangeX"),
+                            jsonObject.getDouble("rangeY"),
+                            jsonObject.getDouble("rangeZ"),
+                            jsonObject.getDouble("rmsX"),
+                            jsonObject.getDouble("rmsY"),
+                            jsonObject.getDouble("rmsZ"),
+                            jsonObject.getDouble("dominantFrequencyX"),
+                            jsonObject.getDouble("dominantFrequencyY"),
+                            jsonObject.getDouble("dominantFrequencyZ"),
+                            jsonObject.getDouble("spectralEnergyX"),
+                            jsonObject.getDouble("spectralEnergyY"),
+                            jsonObject.getDouble("spectralEnergyZ"),
+                            jsonObject.getDouble("spectralEntropyX"),
+                            jsonObject.getDouble("spectralEntropyY"),
+                            jsonObject.getDouble("spectralEntropyZ"),
+                            jsonObject.getDouble("spectralCentroidX"),
+                            jsonObject.getDouble("spectralCentroidY"),
+                            jsonObject.getDouble("spectralCentroidZ")
+                        )
+                        input.add(dataPoint)
+                        output.add(tag)
+                    }
+                }
+
+                uniqueTags = output.distinct()
                 tagToNumber.clear()
                 numberToTag.clear()
                 uniqueTags.forEachIndexed { index, tag ->
@@ -1091,8 +1360,6 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
                 // Export data after fetching from Firebase
 
                 exportDataToDownloads(context, input, encodedOutput)
-                exportDataAndSendRequest(context, input, encodedOutput)
-
 
                 task.complete(Pair(input, encodedOutput))
 
@@ -1134,60 +1401,19 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 val (input, encodedOutput) = fetchDataFromFirebase(this@MainActivity)
-                /*
-                Log.d("ModelTraining", "Data processing complete. Proceeding with model training.")
-                Log.d("ModelTraining", "Data processing complete. input : $input.")
-                Log.d("ModelTraining", "Data processing complete. output: $encodedOutput.")
-                // Example: Train your model here with the input and encodedOutput
-                val numFeatures = input[0].size
-                // Convert input and output to Dataset
-                val trainingData = convertToDataset(input, encodedOutput)
-                Log.d("ModelTraining", "Dataset conversion complete: $trainingData")
-
-                Log.d("ModelTraining", "stopped here.")
-
-                val basicModel = Sequential.of(
-                    Input(30),  // Input layer with 30 features
-                    Dense(10, activation = Activations.Relu),  // A single hidden layer with 10 units
-                    Dense(3, activation = Activations.Softmax)  // Output layer with 3 units (assuming 3 classes)
-                )
-                Log.d("ModelTraining", "stopped here1.5.")
-
-                val model = Sequential.of(
-                    Input(30),
-                    Flatten(),
-                    Dense(256, activation = Activations.Relu),
-                    Dense(128, activation = Activations.Relu),
-                    Dense(3, activation = Activations.Softmax)
-                )
-
-                Log.d("ModelTraining", "stopped here2.")
-                model.compile(
-                    optimizer = Adam(clipGradient =  ClipGradientByValue(0.1f)),
-                    loss = Losses.SOFT_MAX_CROSS_ENTROPY_WITH_LOGITS,
-                    metric = Metrics.ACCURACY
-                )
-
-                Log.d("ModelTraining", "stopped here3.")
-                // Training parameters
-                val epochs = 10
-                val batchSize = 5
-
-                for (epoch in 0 until epochs) {
-                    Log.d("ModelTraining", "Epoch $epoch: Training started")
-
-                    // Train for one epoch
-                    model.fit(
-                        trainingData,
-                        epochs = 1, // Train for one epoch at a time
-                        batchSize = batchSize
-                    )
-                    // Assuming you have a method to evaluate metrics after training
-                    val accuracy = model.evaluate(dataset = trainingData)// Replace with actual method if available
-                    Log.d("ModelTraining", "Epoch $epoch: , Accuracy = $accuracy")
-                }
-                */
                 Log.d("ModelTraining", "Model training complete.")
+
+            } catch (e: Exception) {
+                Log.e("ModelTraining", "Error: ${e.message}")
+            }
+        }
+    }
+    private fun activateSendToDownloads ()  {
+
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val (input, encodedOutput) = activateSendingToDownloads(this@MainActivity)
+                Log.d("ModelTraining", "Training data sent to downloads folder.")
 
             } catch (e: Exception) {
                 Log.e("ModelTraining", "Error: ${e.message}")
@@ -1203,7 +1429,6 @@ class MainActivity : AppCompatActivity(), DataListenerService.DataCallback {
 
         // Save data with tag in SharedPreferences
         // Store the max values along with the tag in SharedPreferences
-        //sharedPreferences.edit().putString(key, "$numReadings readings,$tag,$maxX,$maxY,$maxZ").apply()
         sharedPreferences.edit().putString(key,jsonString ).apply()
 
         // Create a unique key using the timestamp or any other unique identifier

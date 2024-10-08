@@ -13,7 +13,7 @@ class AccelerometerView : View {
 
     private val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = Color.CYAN // Default circle color
+        color = Color.GREEN // Default circle color
     }
 
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -60,5 +60,13 @@ class AccelerometerView : View {
     }
     fun getIntegerPart(value: String): String {
         return value.split(".")[0] // Split the string at the decimal point and take the first part
+    }
+     fun setBackgroundColor(color: String) {
+        circlePaint.color = Color.parseColor(color) // Update the color of the circle
+        invalidate() // Redraw the view to reflect the new color
+    }
+    // New method to get the current circle color
+    fun getBackgroundColor(): Int {
+        return circlePaint.color // Return the current color of the circle
     }
 }
